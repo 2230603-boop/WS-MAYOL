@@ -1,0 +1,2730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayol Sistema De Ordenes</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #121212;
+            --secondary-color: #1e1e1e;
+            --accent-color: #bb86fc;
+            --light-color: #f5f5f5;
+            --success-color: #03dac6;
+            --warning-color: #ffb74d;
+            --pending-color: #bb86fc;
+            --proceso-color: #03dac6;
+            --dark-color: #000000;
+            --text-color: #e0e0e0;
+            --border-color: #333333;
+            --card-bg: #1e1e1e;
+            --sidebar-bg: #121212;
+            --surface-color: #2d2d2d;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--primary-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 20px auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .login-logo {
+            max-width: 90px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            filter: brightness(0.9);
+        }
+
+        .login-header h2 {
+            color: var(--light-color);
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 18px;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--surface-color);
+            font-size: 14px;
+            transition: var(--transition);
+            color: var(--text-color);
+        }
+
+        .login-form input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
+            outline: none;
+        }
+
+        .password-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input-container input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            border-radius: 4px;
+            color: var(--text-color);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-color);
+            color: var(--dark-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 15px;
+            transition: var(--transition);
+        }
+
+        .btn-login:hover {
+            background: #a970f5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(187, 134, 252, 0.3);
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+            font-size: 14px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .remember-me input {
+            width: auto;
+            margin: 0;
+        }
+
+        /* Estilos del sistema principal */
+        .header {
+            background: var(--sidebar-bg);
+            color: var(--text-color);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .user-role {
+            background: var(--success-color);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .user-role.proceso {
+            background: var(--proceso-color);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background-color: var(--accent-color);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .nav-tabs {
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-tab {
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-tab.active {
+            background: var(--accent-color);
+            color: var(--dark-color);
+            border-bottom: 2px solid var(--success-color);
+        }
+
+        .nav-tab.active.proceso {
+            background: var(--proceso-color);
+            border-bottom: 2px solid var(--warning-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Botones con iconos */
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: var(--transition);
+            background: var(--surface-color);
+            color: var(--text-color);
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-edit {
+            background: var(--warning-color);
+            color: var(--dark-color);
+        }
+
+        .btn-delete {
+            background: #cf6679;
+            color: white;
+        }
+
+        .btn-complete {
+            background: var(--success-color);
+            color: var(--dark-color);
+        }
+
+        .btn-cancel {
+            background: #cf6679;
+            color: white;
+        }
+
+        .btn-proceso {
+            background: var(--accent-color);
+            color: var(--dark-color);
+        }
+
+        .btn-pendiente {
+            background: var(--pending-color);
+            color: var(--dark-color);
+        }
+
+        .btn-reactivar {
+            background: var(--proceso-color);
+            color: var(--dark-color);
+        }
+
+        .btn-clear-all {
+            background: #cf6679;
+            color: white;
+        }
+
+        /* Contenedores de formularios */
+        .form-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .form-group {
+            width: 100%;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            background: var(--surface-color);
+            color: var(--text-color);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input {
+            width: auto;
+        }
+
+        /* Dashboard y tablas */
+        .dashboard {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        .dashboard h2 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard h2.proceso {
+            color: var(--proceso-color);
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid var(--accent-color);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .stat-card.proceso {
+            border-left-color: var(--proceso-color);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 8px 0;
+            color: var(--text-color);
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 800px;
+        }
+
+        .orders-table th, .orders-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+
+        .orders-table th {
+            background: var(--surface-color);
+            color: var(--text-color);
+            font-weight: 500;
+            position: sticky;
+            left: 0;
+        }
+
+        .orders-table.proceso th {
+            background: var(--surface-color);
+        }
+
+        .orders-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .status-pendiente { background: var(--pending-color); }
+        .status-proceso { background: var(--accent-color); }
+        .status-completado { background: var(--success-color); }
+        .status-cancelado { background: #cf6679; }
+        .status-baja { background: var(--success-color); }
+        .status-media { background: var(--warning-color); }
+        .status-alta { background: #ff9800; }
+        .status-urgente { background: #cf6679; }
+
+        .empty-message {
+            text-align: center;
+            padding: 30px;
+            color: #9e9e9e;
+            font-style: italic;
+            font-size: 15px;
+        }
+
+        /* Botones de acción compactos */
+        .action-buttons {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons-compact {
+            display: flex;
+            justify-content: center;
+        }
+
+        .status-buttons {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .status-buttons .btn-icon {
+            padding: 6px 8px;
+            font-size: 10px;
+        }
+
+        /* Notificaciones */
+        .notifications-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .notifications-tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .notification-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .notification-tab.active {
+            border-bottom: 2px solid var(--success-color);
+            background: rgba(3, 218, 198, 0.1);
+            font-weight: 600;
+        }
+
+        .notification-tab.proceso.active {
+            border-bottom: 2px solid var(--proceso-color);
+            background: rgba(3, 218, 198, 0.1);
+        }
+
+        .notification-content {
+            display: none;
+        }
+
+        .notification-content.active {
+            display: block;
+        }
+
+        .notification-item {
+            background: var(--surface-color);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: var(--transition);
+        }
+
+        .notification-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .notification-item.proceso {
+            border-left-color: var(--proceso-color);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .notification-header h4 {
+            color: var(--text-color);
+            margin: 0;
+            flex: 1;
+            margin-right: 12px;
+            font-size: 14px;
+        }
+
+        .btn-delete-notification {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+            color: var(--text-color);
+        }
+
+        .btn-delete-notification:hover {
+            opacity: 1;
+        }
+
+        .order-details {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            border-left: 2px solid var(--accent-color);
+        }
+
+        .order-details.proceso {
+            border-left-color: var(--proceso-color);
+        }
+
+        .order-details h4 {
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-size: 13px;
+        }
+
+        .order-details p {
+            margin: 4px 0;
+            font-size: 12px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            overflow-y: auto;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 16px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            color: var(--text-color);
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .modal-header.proceso h3 {
+            color: var(--proceso-color);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #9e9e9e;
+            transition: color 0.2s ease;
+        }
+
+        .close-modal:hover {
+            color: var(--accent-color);
+        }
+
+        .timeline {
+            margin: 18px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .timeline-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-time {
+            font-weight: 500;
+            color: var(--accent-color);
+            font-size: 11px;
+        }
+
+        .timeline-event {
+            margin-left: 8px;
+            color: var(--text-color);
+            font-size: 13px;
+        }
+
+        .comunicacion-jefe {
+            background: rgba(187, 134, 252, 0.1);
+            border-left: 3px solid var(--accent-color);
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 8px;
+        }
+
+        .comunicacion-jefe.proceso {
+            border-left-color: var(--proceso-color);
+            background: rgba(3, 218, 198, 0.1);
+        }
+
+        /* Notificación flotante */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            left: 20px;
+            padding: 14px 18px;
+            background: var(--success-color);
+            color: var(--dark-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transform: translateY(-150%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+        }
+
+        .notification.error {
+            background: #cf6679;
+            color: white;
+        }
+
+        .notification.info {
+            background: var(--accent-color);
+            color: var(--dark-color);
+        }
+
+        .notification.proceso {
+            background: var(--proceso-color);
+            color: var(--dark-color);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Material Icons styling */
+        .material-icons {
+            font-size: 18px;
+            vertical-align: middle;
+        }
+
+        /* Media queries para pantallas más grandes */
+        @media (min-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .login-container {
+                margin: 40px auto;
+                padding: 35px;
+            }
+            
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 18px 25px;
+            }
+            
+            .logo {
+                text-align: left;
+            }
+            
+            .user-info {
+                justify-content: flex-end;
+            }
+            
+            .nav-tabs {
+                flex-direction: row;
+            }
+            
+            .nav-tab {
+                flex: 1;
+                border-bottom: 2px solid transparent;
+            }
+            
+            .form-row {
+                flex-direction: row;
+            }
+            
+            .form-group {
+                flex: 1;
+            }
+            
+            .checkbox-group {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .actions {
+                flex-direction: row;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+            
+            .stats-container {
+                flex-direction: row;
+            }
+            
+            .stat-card {
+                flex: 1;
+            }
+            
+            .orders-table {
+                font-size: 14px;
+                min-width: auto;
+            }
+            
+            .notification {
+                left: auto;
+                right: 25px;
+                max-width: 350px;
+                transform: translateX(150%);
+            }
+            
+            .notification.show {
+                transform: translateX(0);
+            }
+            
+            .notifications-tabs {
+                flex-direction: row;
+            }
+            
+            .modal-content {
+                width: 90%;
+                max-width: 750px;
+                margin: 2% auto;
+                padding: 25px;
+            }
+            
+            .modal-header h3 {
+                font-size: 1.4rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .login-container {
+                margin: 15px;
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 12px;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .nav-tab {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+            
+            .form-container, .dashboard {
+                padding: 15px;
+            }
+            
+            .orders-table {
+                font-size: 12px;
+            }
+            
+            .orders-table th, .orders-table td {
+                padding: 8px 6px;
+            }
+            
+            .btn-icon {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+            
+            .status-buttons {
+                gap: 2px;
+            }
+            
+            .status-buttons .btn-icon {
+                padding: 4px 5px;
+                font-size: 9px;
+            }
+            
+            .remember-me {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-container {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .login-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .nav-tab {
+                padding: 10px 5px;
+                font-size: 12px;
+            }
+            
+            .btn-icon {
+                padding: 5px 6px;
+                font-size: 9px;
+            }
+        }
+
+        /* Estilos mejorados para tablas responsive */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .descripcion-completa {
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 200px;
+        }
+
+        .linea-info, .tipo-mantenimiento-info {
+            white-space: normal;
+            word-wrap: break-word;
+            font-size: 12px;
+            max-width: 150px;
+        }
+
+        /* Nuevos estilos para mejoras visuales */
+        .order-section {
+            margin-bottom: 30px;
+        }
+
+        .order-section h3 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .material-icons-outlined {
+            font-family: 'Material Icons';
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-header">
+            <img src="./img/LOGO.jpg" alt="Logo Mayol" class="login-logo">
+            <h2>Sistema De Órdenes Producción y Proceso</h2>
+        </div>
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group password-group">
+                <label for="password">Contraseña:</label>
+                <div class="password-input-container">
+                    <input type="password" id="password" required>
+                    <button type="button" class="toggle-password" id="togglePassword">
+                        <span class="material-icons">visibility</span>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-login">Iniciar Sesión</button>
+            <div class="remember-me">
+                <input type="checkbox" id="rememberMe">
+                <label for="rememberMe">Recordar mi sesión</label>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sistema Principal (oculto inicialmente) -->
+    <div id="mainSystem" class="container hidden">
+        <div class="header">
+            <div class="logo">
+                <img src="./img/LOGO.jpg"
+                alt="Logo Mayol" class="'header-LOGO" 
+                style="height: 40px; margin-right: 10 px; vertical-align: middle;">
+                EMBOTELLADORA MAYOL S.A. DE C.V</div>
+            <div class="user-info">
+                <span id="currentUser">Usuario</span>
+                <span class="user-role" id="currentRole">Rol</span>
+                <div class="connection-status">
+                    <div class="status-dot" id="connectionStatus"></div>
+                    <span id="connectionText">Conectado</span>
+                </div>
+                <button id="logoutBtn" class="btn-icon">
+                    <span class="material-icons">logout</span>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="dashboard">
+                <span class="material-icons">dashboard</span>
+                Dashboard
+            </div>
+            <div class="nav-tab" data-tab="nueva-orden" id="tabNuevaOrden">
+                <span class="material-icons">add_circle</span>
+                Nueva Orden
+            </div>
+            <div class="nav-tab" data-tab="ordenes" id="tabOrdenes">
+                <span class="material-icons">assignment</span>
+                Órdenes
+            </div>
+            <div class="nav-tab" data-tab="notificaciones" id="tabNotificaciones">
+                <span class="material-icons">notifications</span>
+                Notificaciones
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard" id="dashboardContent">
+                <!-- Contenido del dashboard se carga dinámicamente según el usuario -->
+            </div>
+        </div>
+
+        <!-- Nueva Orden -->
+        <div id="nueva-orden" class="tab-content">
+            <div class="form-container">
+                <!-- Contenido del formulario se carga dinámicamente según el usuario -->
+            </div>
+        </div>
+
+        <!-- Órdenes -->
+        <div id="ordenes" class="tab-content">
+            <div class="dashboard" id="ordenesContent">
+                <!-- Contenido de órdenes se carga dinámicamente según el usuario -->
+            </div>
+        </div>
+
+        <!-- Notificaciones -->
+        <div id="notificaciones" class="tab-content">
+            <div class="dashboard" id="notificacionesContent">
+                <!-- Contenido de notificaciones se carga dinámicamente según el usuario -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición y Comunicación -->
+    <div id="modalEditar" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Gestión de Orden de Trabajo</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-container">
+                <div class="form-section">
+                    <h4>Información de la Orden</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editarSolicitante">SOLICITANTE</label>
+                            <input type="text" id="editarSolicitante" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="editarResponsable">RESPONSABLE</label>
+                            <select id="editarResponsable">
+                                <option value="Benito Suarez">BENITO SUAREZ</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editarMaquina">MÁQUINA/EQUIPO</label>
+                            <input type="text" id="editarMaquina" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editarPrioridad">PRIORIDAD</label>
+                            <select id="editarPrioridad" required>
+                                <option value="baja">Baja</option>
+                                <option value="media">Media</option>
+                                <option value="alta">Alta</option>
+                                <option value="urgente">Urgente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <label for="editarDescripcion">DESCRIPCIÓN DEL PROBLEMA</label>
+                    <textarea id="editarDescripcion" required></textarea>
+                </div>
+
+                <!-- Sección de Comunicación Jefe-Responsable -->
+                <div class="form-section" id="seccionComunicacion">
+                    <h4>Comunicación y Actualizaciones</h4>
+                    <div class="form-group">
+                        <label for="comunicacionJefe">INSTRUCCIONES/ACTUALIZACIONES DEL JEFE:</label>
+                        <textarea id="comunicacionJefe" placeholder="Ej: Los repuestos ya están disponibles en almacén, puedes proceder con la reparación..."></textarea>
+                    </div>
+                    <button class="btn-icon btn-warning" id="btnEnviarComunicacion">
+                        <span class="material-icons">send</span>
+                        Enviar Actualización
+                    </button>
+                </div>
+
+                <!-- Historial de la Orden -->
+                <div class="form-section">
+                    <h4>Historial de la Orden</h4>
+                    <div class="timeline" id="timelineOrden">
+                        <div class="empty-message">No hay historial disponible</div>
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <button class="btn-icon btn-secondary" id="btnCancelarEdicion">
+                        <span class="material-icons">close</span>
+                        Cerrar
+                    </button>
+                    <button class="btn-icon btn-primary" id="btnGuardarEdicion">
+                        <span class="material-icons">save</span>
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación flotante -->
+    <div id="notification" class="notification">
+        <span id="notificationText">Nueva orden asignada</span>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1ywwzR49KiEZC16_rhh9pmw0aMfT8Zxo",
+            authDomain: "sistema-de-ordenes-de-trabajo.firebaseapp.com",
+            databaseURL: "https://sistema-de-ordenes-de-trabajo-default-rtdb.firebaseio.com",
+            projectId: "sistema-de-ordenes-de-trabajo",
+            storageBucket: "sistema-de-ordenes-de-trabajo.firebasestorage.app",
+            messagingSenderId: "328684805267",
+            appId: "1:328684805267:web:ebbd2d1957ad7275ea4166",
+            measurementId: "G-SGVGP74MBL"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 🔄 CONTADORES SEPARADOS PARA PRODUCCIÓN Y PROCESO - CORREGIDOS
+        let contadorProduccion = 1;
+        let contadorProceso = 1;
+
+        // Función MEJORADA para cargar contadores desde Firebase
+        function cargarContadores() {
+            db.ref('contadorProduccion').on('value', (snapshot) => {
+                contadorProduccion = snapshot.val() || 1;
+            });
+            
+            db.ref('contadorProceso').on('value', (snapshot) => {
+                contadorProceso = snapshot.val() || 1;
+            });
+        }
+
+        // Variables globales
+        let ordenes = [];
+        let notificaciones = [];
+        let currentUser = null;
+        let currentRole = null;
+        let currentArea = null;
+        let ordenEditando = null;
+
+        // Elementos del DOM
+        const loginScreen = document.getElementById('loginScreen');
+        const mainSystem = document.getElementById('mainSystem');
+        const loginForm = document.getElementById('loginForm');
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const rememberMe = document.getElementById('rememberMe');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const currentUserSpan = document.getElementById('currentUser');
+        const currentRoleSpan = document.getElementById('currentRole');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const connectionText = document.getElementById('connectionText');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        
+        // Elementos del modal de edición
+        const modalEditar = document.getElementById('modalEditar');
+        const closeModal = document.querySelector('.close-modal');
+        const btnCancelarEdicion = document.getElementById('btnCancelarEdicion');
+        const btnGuardarEdicion = document.getElementById('btnGuardarEdicion');
+        const btnEnviarComunicacion = document.getElementById('btnEnviarComunicacion');
+        const comunicacionJefe = document.getElementById('comunicacionJefe');
+        const timelineOrden = document.getElementById('timelineOrden');
+
+        // Sistema de autenticación con usuarios específicos y permisos unificados
+        const usuarios = {
+            'RODRIGO': { 
+                password: 'produccion_0', 
+                role: 'jefe', 
+                nombre: 'RODRIGO SAMPERIO', 
+                area: 'produccion',
+                permisos: ['crear_orden', 'editar_orden', 'gestionar_orden', 'ver_dashboard', 'ver_ordenes', 'ver_notificaciones']
+            },
+            'EDGAR': { 
+                password: 'proceso_0', 
+                role: 'jefe', 
+                nombre: 'EDGAR', 
+                area: 'proceso',
+                permisos: ['crear_orden', 'editar_orden', 'gestionar_orden', 'ver_dashboard', 'ver_ordenes', 'ver_notificaciones']
+            },
+            'BENITO': { 
+                password: 'mantenimiento_01', 
+                role: 'responsable', 
+                nombre: 'BENITO SUAREZ', 
+                area: null,
+                permisos: ['ver_dashboard', 'ver_ordenes', 'ver_notificaciones', 'cambiar_estado']
+            }
+        };
+
+        // FUNCIÓN PARA VER CONTRASEÑA
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<span class="material-icons">visibility</span>' : '<span class="material-icons">visibility_off</span>';
+        });
+
+        // FUNCIONES DE PERSISTENCIA DE SESIÓN
+        function guardarSesion(usuario, recordar) {
+            if (recordar) {
+                localStorage.setItem('sistemaMayol_usuario', usuario);
+                localStorage.setItem('sistemaMayol_sesion', 'activa');
+            } else {
+                sessionStorage.setItem('sistemaMayol_usuario', usuario);
+                sessionStorage.setItem('sistemaMayol_sesion', 'activa');
+            }
+        }
+
+        function verificarSesionActiva() {
+            const usuarioLocal = localStorage.getItem('sistemaMayol_usuario');
+            const usuarioSession = sessionStorage.getItem('sistemaMayol_usuario');
+            
+            return usuarioLocal || usuarioSession;
+        }
+
+        function obtenerUsuarioGuardado() {
+            return localStorage.getItem('sistemaMayol_usuario') || sessionStorage.getItem('sistemaMayol_usuario');
+        }
+
+        function cerrarSesionPersistente() {
+            localStorage.removeItem('sistemaMayol_usuario');
+            localStorage.removeItem('sistemaMayol_sesion');
+            sessionStorage.removeItem('sistemaMayol_usuario');
+            sessionStorage.removeItem('sistemaMayol_sesion');
+        }
+
+        // FUNCIÓN PARA INICIAR SESIÓN AUTOMÁTICAMENTE SI HAY SESIÓN GUARDADA
+        function iniciarSesionAutomatica() {
+            const usuarioGuardado = obtenerUsuarioGuardado();
+            if (usuarioGuardado && usuarios[usuarioGuardado]) {
+                currentUser = usuarioGuardado;
+                currentRole = usuarios[usuarioGuardado].role;
+                currentArea = usuarios[usuarioGuardado].area;
+                
+                document.getElementById('currentUser').textContent = usuarios[usuarioGuardado].nombre;
+                document.getElementById('currentRole').textContent = currentRole === 'jefe' ? 
+                    (currentArea === 'proceso' ? 'Jefe Proceso' : 'Jefe Producción') : 
+                    'Responsable';
+                
+                if (currentArea === 'proceso') {
+                    document.getElementById('currentRole').classList.add('proceso');
+                }
+                
+                cargarContadores();
+                
+                if (currentRole === 'responsable') {
+                    document.getElementById('tabNuevaOrden').classList.add('hidden');
+                } else {
+                    document.getElementById('tabNuevaOrden').classList.remove('hidden');
+                    cargarFormularioNuevaOrden();
+                }
+                
+                loginScreen.classList.add('hidden');
+                mainSystem.classList.remove('hidden');
+                
+                iniciarListenersFirebase();
+                
+                mostrarNotificacion(`Bienvenido de nuevo ${usuarios[usuarioGuardado].nombre}`, 'info', currentArea);
+                return true;
+            }
+            return false;
+        }
+
+        // FUNCIÓN CORREGIDA: Generar número de orden con contadores independientes
+        function generarNumeroOrden(area) {
+            const fecha = obtenerFechaActual();
+            const prefijo = area === 'proceso' ? 'OTP' : 'OT';
+            
+            let numeroOrden;
+            let nuevoContador;
+            
+            if (area === 'proceso') {
+                numeroOrden = `${prefijo}/${fecha.dia}/${fecha.mes}/${fecha.año}/${contadorProceso}`;
+                nuevoContador = contadorProceso + 1;
+                contadorProceso = nuevoContador;
+                db.ref('contadorProceso').set(nuevoContador);
+            } else {
+                numeroOrden = `${prefijo}/${fecha.dia}/${fecha.mes}/${fecha.año}/${contadorProduccion}`;
+                nuevoContador = contadorProduccion + 1;
+                contadorProduccion = nuevoContador;
+                db.ref('contadorProduccion').set(nuevoContador);
+            }
+            
+            return numeroOrden;
+        }
+
+        // Función para formatear fecha como DD/MM/YYYY
+        function obtenerFechaActual() {
+            const ahora = new Date();
+            const dia = String(ahora.getDate()).padStart(2, '0');
+            const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+            const año = ahora.getFullYear();
+            return { dia, mes, año };
+        }
+
+        // Función para obtener fecha y hora actual en formato legible
+        function obtenerFechaHoraActual() {
+            const ahora = new Date();
+            return ahora.toLocaleString('es-MX', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Función para mostrar notificación
+        function mostrarNotificacion(mensaje, tipo = 'info', area = null) {
+            notificationText.textContent = mensaje;
+            notification.className = 'notification';
+            notification.classList.add(tipo);
+            if (area) {
+                notification.classList.add(area);
+            }
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // CORRECCIÓN 3: Función mejorada para actualizar notificaciones
+        function actualizarNotificaciones() {
+            const notificacionesContent = document.getElementById('notificacionesContent');
+            
+            const notificacionesUsuario = notificaciones.filter(notif => 
+                notif.destinatario === currentUser || notif.destinatario === usuarios[currentUser]?.nombre
+            );
+            
+            if (currentRole === 'responsable') {
+                let notificacionesProduccion = notificacionesUsuario.filter(notif => 
+                    notif.area === 'produccion' || notif.area === undefined
+                );
+                
+                let notificacionesProceso = notificacionesUsuario.filter(notif => 
+                    notif.area === 'proceso'
+                );
+                
+                let notificacionesHTML = `
+                    <div class="notifications-header">
+                        <h2><span class="material-icons">notifications</span> Notificaciones</h2>
+                        <button class="btn-icon btn-clear-all" title="Limpiar todas las notificaciones" onclick="limpiarTodasLasNotificaciones()">
+                            <span class="material-icons">clear_all</span> Limpiar Todo
+                        </button>
+                    </div>
+                    <div class="notifications-tabs">
+                        <div class="notification-tab active" data-notification-tab="produccion">
+                            <span class="material-icons">factory</span> Producción (${notificacionesProduccion.length})
+                        </div>
+                        <div class="notification-tab proceso" data-notification-tab="proceso">
+                            <span class="material-icons">build</span> Proceso (${notificacionesProceso.length})
+                        </div>
+                    </div>
+                    
+                    <div class="notification-content active" id="notification-produccion">
+                `;
+                
+                if (notificacionesProduccion.length === 0) {
+                    notificacionesHTML += '<div class="empty-message">No hay notificaciones de producción</div>';
+                } else {
+                    notificacionesProduccion.forEach((notif, index) => {
+                        notificacionesHTML += `
+                            <div class="notification-item">
+                                <div class="notification-header">
+                                    <h4>${notif.titulo}</h4>
+                                    <button class="btn-icon btn-delete-notification" title="Eliminar notificación" onclick="eliminarNotificacion('${notif.key}')">
+                                        <span class="material-icons">delete</span>
+                                    </button>
+                                </div>
+                                <p>${notif.mensaje}</p>
+                                ${notif.detalles ? `<div class="order-details">
+                                    <h4>Detalles:</h4>
+                                    <p><strong>Máquina:</strong> ${notif.detalles.maquina}</p>
+                                    <p><strong>Descripción:</strong> ${notif.detalles.descripcion}</p>
+                                    <p><strong>Prioridad:</strong> ${notif.detalles.prioridad}</p>
+                                </div>` : ''}
+                                <small>${new Date(notif.timestamp).toLocaleString()}</small>
+                            </div>
+                        `;
+                    });
+                }
+                
+                notificacionesHTML += `
+                    </div>
+                    
+                    <div class="notification-content" id="notification-proceso">
+                `;
+                
+                if (notificacionesProceso.length === 0) {
+                    notificacionesHTML += '<div class="empty-message">No hay notificaciones de proceso</div>';
+                } else {
+                    notificacionesProceso.forEach((notif, index) => {
+                        notificacionesHTML += `
+                            <div class="notification-item proceso">
+                                <div class="notification-header">
+                                    <h4>${notif.titulo}</h4>
+                                    <button class="btn-icon btn-delete-notification" title="Eliminar notificación" onclick="eliminarNotificacion('${notif.key}')">
+                                        <span class="material-icons">delete</span>
+                                    </button>
+                                </div>
+                                <p>${notif.mensaje}</p>
+                                ${notif.detalles ? `<div class="order-details proceso">
+                                    <h4>Detalles:</h4>
+                                    <p><strong>Máquina:</strong> ${notif.detalles.maquina}</p>
+                                    <p><strong>Descripción:</strong> ${notif.detalles.descripcion}</p>
+                                    <p><strong>Prioridad:</strong> ${notif.detalles.prioridad}</p>
+                                </div>` : ''}
+                                <small>${new Date(notif.timestamp).toLocaleString()}</small>
+                            </div>
+                        `;
+                    });
+                }
+                
+                notificacionesHTML += `</div>`;
+                
+                notificacionesContent.innerHTML = notificacionesHTML;
+                
+                document.querySelectorAll('.notification-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const tabId = this.getAttribute('data-notification-tab');
+                        
+                        document.querySelectorAll('.notification-tab').forEach(t => {
+                            t.classList.remove('active');
+                        });
+                        
+                        this.classList.add('active');
+                        
+                        document.querySelectorAll('.notification-content').forEach(content => {
+                            content.classList.remove('active');
+                            if (content.id === 'notification-' + tabId) {
+                                content.classList.add('active');
+                            }
+                        });
+                    });
+                });
+            } else {
+                let notificacionesHTML = `
+                    <div class="notifications-header">
+                        <h2><span class="material-icons">notifications</span> Notificaciones</h2>
+                        <button class="btn-icon btn-clear-all" title="Limpiar todas las notificaciones" onclick="limpiarTodasLasNotificaciones()">
+                            <span class="material-icons">clear_all</span> Limpiar Todo
+                        </button>
+                    </div>
+                `;
+                
+                if (notificacionesUsuario.length === 0) {
+                    notificacionesHTML += '<div class="empty-message">No hay notificaciones</div>';
+                } else {
+                    notificacionesUsuario.forEach((notif, index) => {
+                        notificacionesHTML += `
+                            <div class="notification-item ${notif.area === 'proceso' ? 'proceso' : ''}">
+                                <div class="notification-header">
+                                    <h4>${notif.titulo}</h4>
+                                    <button class="btn-icon btn-delete-notification" title="Eliminar notificación" onclick="eliminarNotificacion('${notif.key}')">
+                                        <span class="material-icons">delete</span>
+                                    </button>
+                                </div>
+                                <p>${notif.mensaje}</p>
+                                ${notif.detalles ? `<div class="order-details ${notif.area === 'proceso' ? 'proceso' : ''}">
+                                    <h4>Detalles:</h4>
+                                    <p><strong>Máquina:</strong> ${notif.detalles.maquina}</p>
+                                    <p><strong>Descripción:</strong> ${notif.detalles.descripcion}</p>
+                                    <p><strong>Prioridad:</strong> ${notif.detalles.prioridad}</p>
+                                </div>` : ''}
+                                <small>${new Date(notif.timestamp).toLocaleString()}</small>
+                            </div>
+                        `;
+                    });
+                }
+                notificacionesContent.innerHTML = notificacionesHTML;
+            }
+        }
+
+        // Función para actualizar el timeline/historial de una orden
+        function actualizarTimeline(orden) {
+            if (!orden.historial) {
+                timelineOrden.innerHTML = '<div class="empty-message">No hay historial disponible</div>';
+                return;
+            }
+
+            let timelineHTML = '';
+            orden.historial.forEach(evento => {
+                timelineHTML += `
+                    <div class="timeline-item">
+                        <span class="timeline-time">${evento.fecha}</span>
+                        <span class="timeline-event">${evento.descripcion}</span>
+                        ${evento.detalles ? `<br><small>${evento.detalles}</small>` : ''}
+                    </div>
+                `;
+            });
+
+            if (orden.comunicacionJefe && orden.comunicacionJefe.length > 0) {
+                orden.comunicacionJefe.forEach(comunicacion => {
+                    timelineHTML += `
+                        <div class="timeline-item">
+                            <span class="timeline-time">${comunicacion.fecha}</span>
+                            <div class="comunicacion-jefe ${orden.area === 'proceso' ? 'proceso' : ''}">
+                                <strong>Actualización del Jefe:</strong>
+                                <p>${comunicacion.mensaje}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            timelineOrden.innerHTML = timelineHTML;
+        }
+
+        // Función para abrir modal de edición
+        function abrirModalEdicion(ordenId) {
+            const orden = ordenes.find(o => o.id === ordenId);
+            if (!orden) return;
+
+            ordenEditando = orden;
+
+            const modalHeader = modalEditar.querySelector('.modal-header');
+            const btnGuardar = document.getElementById('btnGuardarEdicion');
+            
+            if (orden.area === 'proceso') {
+                modalHeader.classList.add('proceso');
+                btnGuardar.classList.add('proceso');
+            } else {
+                modalHeader.classList.remove('proceso');
+                btnGuardar.classList.remove('proceso');
+            }
+
+            document.getElementById('editarSolicitante').value = orden.solicitante || '';
+            document.getElementById('editarResponsable').value = orden.responsable || '';
+            document.getElementById('editarMaquina').value = orden.maquina || '';
+            document.getElementById('editarPrioridad').value = orden.prioridad || 'baja';
+            document.getElementById('editarDescripcion').value = orden.descripcion || '';
+            
+            comunicacionJefe.value = '';
+
+            actualizarTimeline(orden);
+
+            const seccionComunicacion = document.getElementById('seccionComunicacion');
+            if (currentRole === 'jefe') {
+                seccionComunicacion.style.display = 'block';
+            } else {
+                seccionComunicacion.style.display = 'none';
+            }
+
+            modalEditar.style.display = 'block';
+        }
+
+        // Función para cerrar modal de edición
+        function cerrarModalEdicion() {
+            modalEditar.style.display = 'none';
+            ordenEditando = null;
+        }
+
+        // Función para guardar cambios de edición
+        function guardarCambiosEdicion() {
+            if (!ordenEditando) return;
+
+            const solicitante = document.getElementById('editarSolicitante').value;
+            const responsable = document.getElementById('editarResponsable').value;
+            const maquina = document.getElementById('editarMaquina').value;
+            const prioridad = document.getElementById('editarPrioridad').value;
+            const descripcion = document.getElementById('editarDescripcion').value;
+
+            if (!maquina || !descripcion) {
+                alert('Por favor, complete todos los campos obligatorios');
+                return;
+            }
+
+            const ordenIndex = ordenes.findIndex(o => o.id === ordenEditando.id);
+            if (ordenIndex !== -1) {
+                ordenes[ordenIndex] = {
+                    ...ordenes[ordenIndex],
+                    solicitante,
+                    responsable,
+                    maquina,
+                    prioridad,
+                    descripcion
+                };
+
+                db.ref('ordenes').set(ordenes);
+
+                mostrarNotificacion(`Orden ${ordenEditando.id} actualizada correctamente`, 'info', ordenes[ordenIndex].area);
+                cerrarModalEdicion();
+            }
+        }
+
+        // MEJORA 1: Función para enviar comunicación del jefe al responsable y reabrir la orden
+        function enviarComunicacionJefe() {
+            if (!ordenEditando || !comunicacionJefe.value.trim()) {
+                alert('Por favor, escriba un mensaje para el responsable');
+                return;
+            }
+
+            const ordenIndex = ordenes.findIndex(o => o.id === ordenEditando.id);
+            if (ordenIndex !== -1) {
+                const comunicacion = {
+                    mensaje: comunicacionJefe.value.trim(),
+                    fecha: obtenerFechaHoraActual(),
+                    enviadoPor: currentUser
+                };
+
+                if (!ordenes[ordenIndex].comunicacionJefe) {
+                    ordenes[ordenIndex].comunicacionJefe = [];
+                }
+                ordenes[ordenIndex].comunicacionJefe.push(comunicacion);
+
+                if (ordenes[ordenIndex].estado === 'completado' || ordenes[ordenIndex].estado === 'cancelado') {
+                    ordenes[ordenIndex].estado = 'pendiente';
+                    ordenes[ordenIndex].fechaReactivacion = obtenerFechaHoraActual();
+                    
+                    if (!ordenes[ordenIndex].historial) {
+                        ordenes[ordenIndex].historial = [];
+                    }
+                    ordenes[ordenIndex].historial.push({
+                        fecha: obtenerFechaHoraActual(),
+                        descripcion: 'Orden reactivada por el jefe',
+                        detalles: `Motivo: ${comunicacionJefe.value.trim()}`
+                    });
+                }
+
+                db.ref('ordenes').set(ordenes);
+
+                crearNotificacion(
+                    'Actualización en orden de trabajo',
+                    `El jefe ha actualizado la orden ${ordenEditando.id}: ${comunicacionJefe.value.substring(0, 100)}...`,
+                    'urgente',
+                    'BENITO',
+                    ordenes[ordenIndex].area
+                );
+
+                mostrarNotificacion('Comunicación enviada al responsable y orden reabierta', 'info', ordenes[ordenIndex].area);
+                comunicacionJefe.value = '';
+                actualizarTimeline(ordenes[ordenIndex]);
+                actualizarDashboard();
+                actualizarTablaOrdenes();
+            }
+        }
+
+        // Función para actualizar el dashboard según el usuario
+        function actualizarDashboard() {
+            const dashboardContent = document.getElementById('dashboardContent');
+            
+            if (currentRole === 'responsable') {
+                let ordenesFiltradas = ordenes;
+                
+                const totalProgramadas = ordenesFiltradas.length;
+                const pendientes = ordenesFiltradas.filter(o => o.estado === 'pendiente').length;
+                const enProceso = ordenesFiltradas.filter(o => o.estado === 'proceso').length;
+                const completadas = ordenesFiltradas.filter(o => o.estado === 'completado').length;
+                const noRealizadas = ordenesFiltradas.filter(o => o.estado === 'cancelado').length;
+                
+                const ordenesProduccion = ordenesFiltradas.filter(o => o.area === 'produccion' || o.area === undefined);
+                const ordenesProceso = ordenesFiltradas.filter(o => o.area === 'proceso');
+                
+                const pendientesProduccion = ordenesProduccion.filter(o => o.estado === 'pendiente').length;
+                const enProcesoProduccion = ordenesProduccion.filter(o => o.estado === 'proceso').length;
+                const completadasProduccion = ordenesProduccion.filter(o => o.estado === 'completado').length;
+                
+                const pendientesProceso = ordenesProceso.filter(o => o.estado === 'pendiente').length;
+                const enProcesoProceso = ordenesProceso.filter(o => o.estado === 'proceso').length;
+                const completadasProceso = ordenesProceso.filter(o => o.estado === 'completado').length;
+                
+                dashboardContent.innerHTML = `
+                    <h2><span class="material-icons">dashboard</span> Dashboard de Órdenes de Trabajo</h2>
+                    
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div>Total Programadas</div>
+                            <div class="stat-number" id="totalProgramadas">${totalProgramadas}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div>Pendientes</div>
+                            <div class="stat-number" id="pendientes">${pendientes}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div>En Proceso</div>
+                            <div class="stat-number" id="enProceso">${enProceso}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div>Completadas</div>
+                            <div class="stat-number" id="completadas">${completadas}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div>No Realizadas</div>
+                            <div class="stat-number" id="noRealizadas">${noRealizadas}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+                        <div>
+                            <h3><span class="material-icons">factory</span> Producción</h3>
+                            <div class="stats-container">
+                                <div class="stat-card">
+                                    <div>Pendientes</div>
+                                    <div class="stat-number">${pendientesProduccion}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div>En Proceso</div>
+                                    <div class="stat-number">${enProcesoProduccion}</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div>Completadas</div>
+                                    <div class="stat-number">${completadasProduccion}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="proceso"><span class="material-icons">build</span> Proceso</h3>
+                            <div class="stats-container">
+                                <div class="stat-card proceso">
+                                    <div>Pendientes</div>
+                                    <div class="stat-number">${pendientesProceso}</div>
+                                </div>
+                                <div class="stat-card proceso">
+                                    <div>En Proceso</div>
+                                    <div class="stat-number">${enProcesoProceso}</div>
+                                </div>
+                                <div class="stat-card proceso">
+                                    <div>Completadas</div>
+                                    <div class="stat-number">${completadasProceso}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                let ordenesFiltradas = ordenes.filter(o => o.area === currentArea);
+                
+                const totalProgramadas = ordenesFiltradas.length;
+                const pendientes = ordenesFiltradas.filter(o => o.estado === 'pendiente').length;
+                const enProceso = ordenesFiltradas.filter(o => o.estado === 'proceso').length;
+                const completadas = ordenesFiltradas.filter(o => o.estado === 'completado').length;
+                const noRealizadas = ordenesFiltradas.filter(o => o.estado === 'cancelado').length;
+                
+                dashboardContent.innerHTML = `
+                    <h2 class="${currentArea === 'proceso' ? 'proceso' : ''}"><span class="material-icons">dashboard</span> Dashboard - ${currentArea === 'proceso' ? 'Proceso' : 'Producción'}</h2>
+                    
+                    <div class="stats-container">
+                        <div class="stat-card ${currentArea === 'proceso' ? 'proceso' : ''}">
+                            <div>Total Programadas</div>
+                            <div class="stat-number" id="totalProgramadas">${totalProgramadas}</div>
+                        </div>
+                        <div class="stat-card ${currentArea === 'proceso' ? 'proceso' : ''}">
+                            <div>Pendientes</div>
+                            <div class="stat-number" id="pendientes">${pendientes}</div>
+                        </div>
+                        <div class="stat-card ${currentArea === 'proceso' ? 'proceso' : ''}">
+                            <div>En Proceso</div>
+                            <div class="stat-number" id="enProceso">${enProceso}</div>
+                        </div>
+                        <div class="stat-card ${currentArea === 'proceso' ? 'proceso' : ''}">
+                            <div>Completadas</div>
+                            <div class="stat-number" id="completadas">${completadas}</div>
+                        </div>
+                        <div class="stat-card ${currentArea === 'proceso' ? 'proceso' : ''}">
+                            <div>No Realizadas</div>
+                            <div class="stat-number" id="noRealizadas">${noRealizadas}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // CORRECCIÓN 1: Función mejorada para actualizar la tabla de órdenes con nuevas columnas
+        function actualizarTablaOrdenes() {
+            const ordenesContent = document.getElementById('ordenesContent');
+            
+            if (currentRole === 'responsable') {
+                let ordenesProduccion = ordenes.filter(o => o.area === 'produccion' || o.area === undefined);
+                let ordenesProceso = ordenes.filter(o => o.area === 'proceso');
+                
+                ordenesProduccion.sort((a, b) => b.timestamp - a.timestamp);
+                ordenesProceso.sort((a, b) => b.timestamp - a.timestamp);
+                
+                ordenesContent.innerHTML = `
+                    <h2><span class="material-icons">assignment</span> Órdenes de Trabajo</h2>
+                    <div class="orders-container">
+                        <div class="order-section">
+                            <h3><span class="material-icons">factory</span> Producción</h3>
+                            <div class="table-container">
+                                <table class="orders-table">
+                                    <thead>
+                                        <tr>
+                                            <th>No. Orden</th>
+                                            <th>Máquina/Equipo</th>
+                                            <th>Descripción</th>
+                                            <th>Línea</th>
+                                            <th>Tipo Mant.</th>
+                                            <th>Prioridad</th>
+                                            <th>Fecha Prometida</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${ordenesProduccion.length === 0 ? 
+                                            '<tr><td colspan="9" class="empty-message">No hay órdenes de producción</td></tr>' : 
+                                            ordenesProduccion.map(orden => {
+                                                const estadoClass = `status-${orden.estado}`;
+                                                const prioridadClass = `status-${orden.prioridad}`;
+                                                
+                                                return `
+                                                    <tr>
+                                                        <td>${orden.id}</td>
+                                                        <td>${orden.maquina}</td>
+                                                        <td class="descripcion-completa">${orden.descripcion}</td>
+                                                        <td class="linea-info">${orden.lineas ? orden.lineas.join(', ') : 'N/A'}</td>
+                                                        <td class="tipo-mantenimiento-info">${orden.tipoMantenimiento || 'N/A'}</td>
+                                                        <td><span class="status-badge ${prioridadClass}">${orden.prioridad}</span></td>
+                                                        <td>${orden.fechaPrometida}</td>
+                                                        <td><span class="status-badge ${estadoClass}">${orden.estado}</span></td>
+                                                        <td class="action-buttons-compact">
+                                                            ${orden.estado !== 'completado' && orden.estado !== 'cancelado' ? 
+                                                                `<div class="status-buttons">
+                                                                    <button class="btn-icon btn-pendiente" title="Marcar como pendiente" onclick="marcarComoPendiente('${orden.id}')">
+                                                                        <span class="material-icons">schedule</span>
+                                                                    </button>
+                                                                    <button class="btn-icon btn-proceso" title="En proceso" onclick="cambiarEstado('${orden.id}', 'proceso')">
+                                                                        <span class="material-icons">build</span>
+                                                                    </button>
+                                                                    <button class="btn-icon btn-complete" title="Completar" onclick="cambiarEstado('${orden.id}', 'completado')">
+                                                                        <span class="material-icons">check_circle</span>
+                                                                    </button>
+                                                                    <button class="btn-icon btn-cancel" title="Cancelar" onclick="cancelarOrden('${orden.id}')">
+                                                                        <span class="material-icons">cancel</span>
+                                                                    </button>
+                                                                </div>` : ''}
+                                                            ${orden.estado === 'cancelado' && orden.comunicacionJefe && orden.comunicacionJefe.length > 0 ? 
+                                                                `<button class="btn-icon btn-reactivar" title="Reactivar orden" onclick="reactivarOrden('${orden.id}')">
+                                                                    <span class="material-icons">refresh</span>
+                                                                </button>` : ''}
+                                                        </td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="order-section">
+                            <h3 class="proceso"><span class="material-icons">build</span> Proceso</h3>
+                            <div class="table-container">
+                                <table class="orders-table proceso">
+                                    <thead>
+                                        <tr>
+                                            <th>No. Orden</th>
+                                            <th>Máquina/Equipo</th>
+                                            <th>Descripción</th>
+                                            <th>Sala</th>
+                                            <th>Tipo Mant.</th>
+                                            <th>Prioridad</th>
+                                            <th>Fecha Prometida</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${ordenesProceso.length === 0 ? 
+                                            '<tr><td colspan="9" class="empty-message">No hay órdenes de proceso</td></tr>' : 
+                                            ordenesProceso.map(orden => {
+                                                const estadoClass = `status-${orden.estado}`;
+                                                const prioridadClass = `status-${orden.prioridad}`;
+                                                
+                                                return `
+                                                    <tr>
+                                                        <td>${orden.id}</td>
+                                                        <td>${orden.maquina}</td>
+                                                        <td class="descripcion-completa">${orden.descripcion}</td>
+                                                        <td class="linea-info">${orden.lineas ? orden.lineas.join(', ') : 'N/A'}</td>
+                                                        <td class="tipo-mantenimiento-info">${orden.tipoMantenimiento || 'N/A'}</td>
+                                                        <td><span class="status-badge ${prioridadClass}">${orden.prioridad}</span></td>
+                                                        <td>${orden.fechaPrometida}</td>
+                                                        <td><span class="status-badge ${estadoClass}">${orden.estado}</span></td>
+                                                        <td class="action-buttons-compact">
+                                                            ${orden.estado !== 'completado' && orden.estado !== 'cancelado' ? 
+                                                                `<div class="status-buttons">
+                                                                    <button class="btn-icon btn-pendiente" title="Marcar como pendiente" onclick="marcarComoPendiente('${orden.id}')">
+                                                                        <span class="material-icons">schedule</span>
+                                                                    </button>
+                                                                    <button class="btn-icon btn-proceso" title="En proceso" onclick="cambiarEstado('${orden.id}', 'proceso')">
+                                                                        <span class="material-icons">build</span>
+                                                                    </button>
+                                                                    <button class="btn-icon btn-complete" title="Completar" onclick="cambiarEstado('${orden.id}', 'completado')">
+                                                                        <span class="material-icons">check_circle</span>
+                                                                    </button>
+                                                                    <button class="btn-icon btn-cancel" title="Cancelar" onclick="cancelarOrden('${orden.id}')">
+                                                                        <span class="material-icons">cancel</span>
+                                                                    </button>
+                                                                </div>` : ''}
+                                                            ${orden.estado === 'cancelado' && orden.comunicacionJefe && orden.comunicacionJefe.length > 0 ? 
+                                                                `<button class="btn-icon btn-reactivar" title="Reactivar orden" onclick="reactivarOrden('${orden.id}')">
+                                                                    <span class="material-icons">refresh</span>
+                                                                </button>` : ''}
+                                                        </td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                let ordenesFiltradas = ordenes.filter(o => o.area === currentArea);
+                
+                ordenesFiltradas.sort((a, b) => b.timestamp - a.timestamp);
+                
+                const columnaArea = currentArea === 'proceso' ? 'Sala' : 'Línea';
+                
+                ordenesContent.innerHTML = `
+                    <h2 class="${currentArea === 'proceso' ? 'proceso' : ''}"><span class="material-icons">assignment</span> Órdenes - ${currentArea === 'proceso' ? 'Proceso' : 'Producción'}</h2>
+                    <div class="table-container">
+                        <table class="orders-table ${currentArea === 'proceso' ? 'proceso' : ''}">
+                            <thead>
+                                <tr>
+                                    <th>No. Orden</th>
+                                    <th>Máquina/Equipo</th>
+                                    <th>Descripción</th>
+                                    <th>${columnaArea}</th>
+                                    <th>Tipo Mant.</th>
+                                    <th>Prioridad</th>
+                                    <th>Fecha Prometida</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${ordenesFiltradas.length === 0 ? 
+                                    '<tr><td colspan="9" class="empty-message">No hay órdenes asignadas</td></tr>' : 
+                                    ordenesFiltradas.map(orden => {
+                                        const estadoClass = `status-${orden.estado}`;
+                                        const prioridadClass = `status-${orden.prioridad}`;
+                                        
+                                        return `
+                                            <tr>
+                                                <td>${orden.id}</td>
+                                                <td>${orden.maquina}</td>
+                                                <td class="descripcion-completa">${orden.descripcion}</td>
+                                                <td class="linea-info">${orden.lineas ? orden.lineas.join(', ') : 'N/A'}</td>
+                                                <td class="tipo-mantenimiento-info">${orden.tipoMantenimiento || 'N/A'}</td>
+                                                <td><span class="status-badge ${prioridadClass}">${orden.prioridad}</span></td>
+                                                <td>${orden.fechaPrometida}</td>
+                                                <td><span class="status-badge ${estadoClass}">${orden.estado}</span></td>
+                                                <td class="action-buttons">
+                                                    <button class="btn-icon btn-edit" title="Gestionar" onclick="abrirModalEdicion('${orden.id}')">
+                                                        <span class="material-icons">settings</span>
+                                                    </button>
+                                                    <button class="btn-icon btn-delete" title="Eliminar" onclick="eliminarOrden('${orden.id}')">
+                                                        <span class="material-icons">delete</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        }
+
+        // Función para cargar el formulario de nueva orden según el área
+        function cargarFormularioNuevaOrden() {
+            const nuevaOrdenContent = document.getElementById('nueva-orden').querySelector('.form-container');
+            
+            const isProceso = currentArea === 'proceso';
+            const areaClass = isProceso ? 'proceso' : '';
+            const btnClass = isProceso ? 'btn-primary proceso' : 'btn-primary';
+            
+            nuevaOrdenContent.innerHTML = `
+                <h2><span class="material-icons">add_circle</span> Nueva Orden de Trabajo</h2>
+                <div class="form-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="solicitante">SOLICITANTE</label>
+                            <input type="text" id="solicitante" value="${usuarios[currentUser].nombre}">
+                        </div>
+                        <div class="form-group">
+                            <label for="responsable">RESPONSABLE</label>
+                            <select id="responsable">
+                                <option value="Benito Suarez">BENITO SUAREZ</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maquina">MÁQUINA/EQUIPO</label>
+                            <input type="text" id="maquina" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="prioridad">PRIORIDAD</label>
+                            <select id="prioridad" required>
+                                <option value="baja">Baja</option>
+                                <option value="media">Media</option>
+                                <option value="alta">Alta</option>
+                                <option value="urgente">Urgente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <label for="descripcion">DESCRIPCIÓN DEL PROBLEMA</label>
+                    <textarea id="descripcion" required></textarea>
+                </div>
+                
+                <div class="form-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fechaPrometida">FECHA PROMETIDA</label>
+                            <input type="date" id="fechaPrometida" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <label>TIPO DE MANTENIMIENTO</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="preventivo">
+                            <label for="preventivo">PREVENTIVO</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="correctivo">
+                            <label for="correctivo">CORRECTIVO</label>
+                        </div>
+                    </div>
+                </div>
+                
+                ${isProceso ? `
+                <div class="form-section">
+                    <label for="linea">SALA DE PROCESO</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="salaAgua">
+                            <label for="salaAgua">Sala de acondicionamiento de agua</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="salaJarabes1">
+                            <label for="salaJarabes1">Sala de jarabes 1</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="salaJarabes2">
+                            <label for="salaJarabes2">Sala de jarabes 2</label>
+                        </div>
+                    </div>
+                </div>
+                ` : `
+                <div class="form-section">
+                    <label for="linea">LÍNEA DE PRODUCCIÓN</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="linea1">
+                            <label for="linea1">LÍNEA #1</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="linea2">
+                            <label for="linea2">LÍNEA #2</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="linea3">
+                            <label for="linea3">LÍNEA #3</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="linea4">
+                            <label for="linea4">LÍNEA #4</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="linea5">
+                            <label for="linea5">LÍNEA #5</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="linea6">
+                            <label for="linea6">LÍNEA #6</label>
+                        </div>
+                    </div>
+                </div>
+                `}
+                
+                <div class="form-section">
+                    <label for="observaciones">OBSERVACIONES INICIALES</label>
+                    <textarea id="observaciones"></textarea>
+                </div>
+                
+                <div class="actions">
+                    <button class="btn-icon btn-secondary" id="btnCancelar">
+                        <span class="material-icons">close</span>
+                        Cancelar
+                    </button>
+                    <button class="btn-icon ${btnClass}" id="btnGuardar">
+                        <span class="material-icons">save</span>
+                        Guardar Orden
+                    </button>
+                </div>
+            `;
+            
+            const ahora = new Date();
+            const fechaHoraLocal = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            
+            document.getElementById('btnGuardar').addEventListener('click', guardarNuevaOrden);
+            document.getElementById('btnCancelar').addEventListener('click', cancelarFormulario);
+        }
+
+        // FUNCIÓN CORREGIDA: Guardar nueva orden con contadores independientes
+        function guardarNuevaOrden() {
+            const solicitante = document.getElementById('solicitante').value;
+            const responsable = document.getElementById('responsable').value;
+            const maquina = document.getElementById('maquina').value;
+            const prioridad = document.getElementById('prioridad').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const fechaPrometida = document.getElementById('fechaPrometida').value;
+            const preventivo = document.getElementById('preventivo').checked;
+            const correctivo = document.getElementById('correctivo').checked;
+            const observaciones = document.getElementById('observaciones').value;
+            
+            if (!maquina || !descripcion || !fechaPrometida) {
+                alert('Por favor, complete todos los campos obligatorios');
+                return;
+            }
+            
+            let lineas = [];
+            if (currentArea === 'proceso') {
+                if(document.getElementById('salaAgua').checked) lineas.push('Sala de acondicionamiento de agua');
+                if(document.getElementById('salaJarabes1').checked) lineas.push('Sala de jarabes 1');
+                if(document.getElementById('salaJarabes2').checked) lineas.push('Sala de jarabes 2');
+            } else {
+                if(document.getElementById('linea1').checked) lineas.push('Línea #1');
+                if(document.getElementById('linea2').checked) lineas.push('Línea #2');
+                if(document.getElementById('linea3').checked) lineas.push('Línea #3');
+                if(document.getElementById('linea4').checked) lineas.push('Línea #4');
+                if(document.getElementById('linea5').checked) lineas.push('Línea #5');
+                if(document.getElementById('linea6').checked) lineas.push('Línea #6');
+            }
+            
+            const nuevaOrden = {
+                id: generarNumeroOrden(currentArea),
+                solicitante,
+                responsable,
+                maquina,
+                estado: 'pendiente',
+                prioridad,
+                descripcion,
+                fechaPrometida,
+                tipoMantenimiento: preventivo ? (correctivo ? 'Preventivo y Correctivo' : 'Preventivo') : (correctivo ? 'Correctivo' : ''),
+                lineas,
+                observaciones,
+                timestamp: Date.now(),
+                fechaPendiente: obtenerFechaHoraActual(),
+                area: currentArea,
+                historial: [{
+                    fecha: obtenerFechaHoraActual(),
+                    descripcion: 'Orden creada',
+                    detalles: `Creada por: ${solicitante}`
+                }]
+            };
+            
+            ordenes.push(nuevaOrden);
+            db.ref('ordenes').set(ordenes);
+            
+            let mensajeNotificacion = `Se te ha asignado una nueva orden: ${nuevaOrden.id}`;
+            if (observaciones) {
+                mensajeNotificacion += `\nObservaciones: ${observaciones}`;
+            }
+            
+            crearNotificacion(
+                'Nueva orden de trabajo asignada',
+                mensajeNotificacion,
+                prioridad === 'urgente' ? 'urgente' : 'general',
+                'BENITO',
+                currentArea,
+                {
+                    maquina: maquina,
+                    descripcion: descripcion,
+                    prioridad: prioridad,
+                    fechaPrometida: fechaPrometida,
+                    tipoMantenimiento: preventivo ? (correctivo ? 'Preventivo y Correctivo' : 'Preventivo') : (correctivo ? 'Correctivo' : ''),
+                    lineas: lineas.join(', '),
+                    observaciones: observaciones
+                }
+            );
+            
+            mostrarNotificacion(`Orden ${nuevaOrden.id} creada y asignada a ${responsable}`, 'info', currentArea);
+            
+            document.getElementById('maquina').value = '';
+            document.getElementById('descripcion').value = '';
+            document.getElementById('fechaPrometida').value = '';
+            document.getElementById('preventivo').checked = false;
+            document.getElementById('correctivo').checked = false;
+            
+            if (currentArea === 'proceso') {
+                document.getElementById('salaAgua').checked = false;
+                document.getElementById('salaJarabes1').checked = false;
+                document.getElementById('salaJarabes2').checked = false;
+            } else {
+                document.getElementById('linea1').checked = false;
+                document.getElementById('linea2').checked = false;
+                document.getElementById('linea3').checked = false;
+                document.getElementById('linea4').checked = false;
+                document.getElementById('linea5').checked = false;
+                document.getElementById('linea6').checked = false;
+            }
+            
+            document.getElementById('observaciones').value = '';
+        }
+
+        // Función para cancelar formulario
+        function cancelarFormulario() {
+            if(confirm('¿Está seguro de que desea cancelar?')) {
+                document.getElementById('maquina').value = '';
+                document.getElementById('descripcion').value = '';
+                document.getElementById('fechaPrometida').value = '';
+                document.getElementById('preventivo').checked = false;
+                document.getElementById('correctivo').checked = false;
+                
+                if (currentArea === 'proceso') {
+                    document.getElementById('salaAgua').checked = false;
+                    document.getElementById('salaJarabes1').checked = false;
+                    document.getElementById('salaJarabes2').checked = false;
+                } else {
+                    document.getElementById('linea1').checked = false;
+                    document.getElementById('linea2').checked = false;
+                    document.getElementById('linea3').checked = false;
+                    document.getElementById('linea4').checked = false;
+                    document.getElementById('linea5').checked = false;
+                    document.getElementById('linea6').checked = false;
+                }
+                
+                document.getElementById('observaciones').value = '';
+            }
+        }
+
+        // Función para reactivar una orden cancelada
+        function reactivarOrden(ordenId) {
+            const ordenIndex = ordenes.findIndex(o => o.id === ordenId);
+            if (ordenIndex !== -1) {
+                const orden = ordenes[ordenIndex];
+                orden.estado = 'pendiente';
+                orden.fechaReactivacion = obtenerFechaHoraActual();
+                
+                if (!orden.historial) {
+                    orden.historial = [];
+                }
+                orden.historial.push({
+                    fecha: obtenerFechaHoraActual(),
+                    descripcion: 'Orden reactivada por el responsable',
+                    detalles: 'El responsable ha reactivado la orden basado en las actualizaciones del jefe'
+                });
+
+                db.ref('ordenes').set(ordenes);
+
+                crearNotificacion(
+                    `Orden ${ordenId} reactivada`,
+                    `El responsable ha reactivado la orden basado en tus actualizaciones`,
+                    'reactivacion',
+                    orden.area === 'proceso' ? 'EDGAR' : 'RODRIGO',
+                    orden.area
+                );
+
+                mostrarNotificacion(`Orden ${ordenId} reactivada`, 'info', orden.area);
+                actualizarDashboard();
+                actualizarTablaOrdenes();
+            }
+        }
+
+        // Función para marcar una orden como pendiente
+        function marcarComoPendiente(ordenId) {
+            const motivo = prompt('Ingrese el motivo por el cual la orden se encuentra pendiente:');
+            if (motivo === null) return;
+            
+            const ordenIndex = ordenes.findIndex(o => o.id === ordenId);
+            if (ordenIndex !== -1) {
+                const orden = ordenes[ordenIndex];
+                orden.estado = 'pendiente';
+                orden.motivoPendiente = motivo;
+                orden.fechaPendiente = obtenerFechaHoraActual();
+                
+                if (!orden.historial) {
+                    orden.historial = [];
+                }
+                orden.historial.push({
+                    fecha: obtenerFechaHoraActual(),
+                    descripcion: 'Orden marcada como pendiente',
+                    detalles: `Motivo: ${motivo}`
+                });
+
+                db.ref('ordenes').set(ordenes);
+                
+                crearNotificacion(
+                    `Orden ${ordenId} marcada como pendiente`,
+                    `La orden ha sido marcada como pendiente. Motivo: ${motivo}`,
+                    'pendiente',
+                    orden.area === 'proceso' ? 'EDGAR' : 'RODRIGO',
+                    orden.area
+                );
+                
+                mostrarNotificacion(`Orden ${ordenId} marcada como pendiente`, 'info', orden.area);
+                actualizarDashboard();
+                actualizarTablaOrdenes();
+            }
+        }
+
+        // Función para cambiar el estado de una orden
+        function cambiarEstado(ordenId, nuevoEstado) {
+            const ordenIndex = ordenes.findIndex(o => o.id === ordenId);
+            if (ordenIndex !== -1) {
+                const orden = ordenes[ordenIndex];
+                const estadoAnterior = orden.estado;
+                orden.estado = nuevoEstado;
+                
+                const fechaActual = obtenerFechaHoraActual();
+                if (nuevoEstado === 'proceso') {
+                    orden.fechaProceso = fechaActual;
+                } else if (nuevoEstado === 'completado') {
+                    orden.fechaCompletado = fechaActual;
+                } else if (nuevoEstado === 'pendiente') {
+                    orden.fechaPendiente = fechaActual;
+                }
+                
+                if (nuevoEstado !== 'pendiente') {
+                    orden.motivoPendiente = '';
+                }
+                
+                if (!orden.historial) {
+                    orden.historial = [];
+                }
+                orden.historial.push({
+                    fecha: fechaActual,
+                    descripcion: `Estado cambiado de ${estadoAnterior} a ${nuevoEstado}`
+                });
+
+                db.ref('ordenes').set(ordenes);
+                
+                crearNotificacion(
+                    `Orden ${ordenId} actualizada`,
+                    `La orden ha cambiado de ${estadoAnterior} a ${nuevoEstado}`,
+                    'info',
+                    orden.area === 'proceso' ? 'EDGAR' : 'RODRIGO',
+                    orden.area
+                );
+                
+                mostrarNotificacion(`Has actualizado la orden ${ordenId} a ${nuevoEstado}`, 'info', orden.area);
+                actualizarDashboard();
+                actualizarTablaOrdenes();
+            }
+        }
+
+        // Función para cancelar una orden (con motivo)
+        function cancelarOrden(ordenId) {
+            const motivo = prompt('Ingrese el motivo de cancelación:');
+            if (motivo === null) return;
+            
+            const ordenIndex = ordenes.findIndex(o => o.id === ordenId);
+            if (ordenIndex !== -1) {
+                const orden = ordenes[ordenIndex];
+                orden.estado = 'cancelado';
+                orden.motivoCancelacion = motivo;
+                orden.motivoPendiente = '';
+                orden.fechaCancelacion = obtenerFechaHoraActual();
+                
+                if (!orden.historial) {
+                    orden.historial = [];
+                }
+                orden.historial.push({
+                    fecha: obtenerFechaHoraActual(),
+                    descripcion: 'Orden cancelada',
+                    detalles: `Motivo: ${motivo}`
+                });
+
+                db.ref('ordenes').set(ordenes);
+                
+                crearNotificacion(
+                    `Orden ${ordenId} cancelada`,
+                    `La orden ha sido cancelada. Motivo: ${motivo}`,
+                    'error',
+                    orden.area === 'proceso' ? 'EDGAR' : 'RODRIGO',
+                    orden.area
+                );
+                
+                mostrarNotificacion(`Orden ${ordenId} cancelada`, 'error', orden.area);
+                actualizarDashboard();
+                actualizarTablaOrdenes();
+            }
+        }
+
+        // Agrega esta función para eliminar órdenes
+        function eliminarOrden(ordenId) {
+            if (confirm('¿Está seguro de que desea eliminar esta orden?')) {
+                const ordenIndex = ordenes.findIndex(o => o.id === ordenId);
+                if (ordenIndex !== -1) {
+                    const orden = ordenes[ordenIndex];
+                    ordenes.splice(ordenIndex, 1);
+                    db.ref('ordenes').set(ordenes);
+                    
+                    mostrarNotificacion(`Orden ${ordenId} eliminada correctamente`, 'info', orden.area);
+                    actualizarDashboard();
+                    actualizarTablaOrdenes();
+                }
+            }
+        }
+
+        // Función para crear notificación
+        function crearNotificacion(titulo, mensaje, tipo = 'general', destinatario = null, area = null, detalles = null) {
+            const notificacion = {
+                titulo,
+                mensaje,
+                timestamp: Date.now(),
+                usuario: currentUser,
+                tipo,
+                destinatario: destinatario || currentUser,
+                area: area || currentArea
+            };
+            
+            if (detalles) {
+                notificacion.detalles = detalles;
+            }
+            
+            const nuevaNotificacionRef = db.ref('notificaciones').push();
+            notificacion.key = nuevaNotificacionRef.key;
+            nuevaNotificacionRef.set(notificacion);
+        }
+
+        // Función para eliminar una notificación individual por clave
+        function eliminarNotificacion(notificacionKey) {
+            if (confirm('¿Está seguro de que desea eliminar esta notificación?')) {
+                db.ref('notificaciones/' + notificacionKey).remove();
+            }
+        }
+
+        // Función MEJORADA para limpiar solo las notificaciones del usuario actual
+        function limpiarTodasLasNotificaciones() {
+            if (confirm('¿Está seguro de que desea eliminar TODAS sus notificaciones?')) {
+                db.ref('notificaciones').once('value').then((snapshot) => {
+                    const notifsData = snapshot.val();
+                    if (notifsData) {
+                        const updates = {};
+                        Object.keys(notifsData).forEach(key => {
+                            const notif = notifsData[key];
+                            if (notif.destinatario === currentUser || notif.destinatario === usuarios[currentUser]?.nombre) {
+                                updates['notificaciones/' + key] = null;
+                            }
+                        });
+                        db.ref().update(updates).then(() => {
+                            mostrarNotificacion('Todas tus notificaciones han sido eliminadas', 'info');
+                        });
+                    }
+                });
+            }
+        }
+
+        //Función mejorada para verificar credenciales
+        function verificarCredenciales(username, password) {
+            const usuarioNormalizado = username.trim().toUpperCase();
+            
+            if (!usuarios[usuarioNormalizado]) {
+                return false;
+            }
+            
+            if (usuarios[usuarioNormalizado].password !== password) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        // MODIFICAR EL EVENT LISTENER DEL LOGIN
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim().toUpperCase();
+            const password = document.getElementById('password').value;
+            const recordar = rememberMe.checked;
+            
+            if (verificarCredenciales(username, password)) {
+                guardarSesion(username, recordar);
+                
+                currentUser = username;
+                currentRole = usuarios[username].role;
+                currentArea = usuarios[username].area;
+                currentUserSpan.textContent = usuarios[username].nombre;
+                currentRoleSpan.textContent = currentRole === 'jefe' ? 
+                    (currentArea === 'proceso' ? 'Jefe Proceso' : 'Jefe Producción') : 
+                    'Responsable';
+                
+                if (currentArea === 'proceso') {
+                    currentRoleSpan.classList.add('proceso');
+                } else {
+                    currentRoleSpan.classList.remove('proceso');
+                }
+                
+                cargarContadores();
+                
+                if (currentRole === 'responsable') {
+                    document.getElementById('tabNuevaOrden').classList.add('hidden');
+                } else {
+                    document.getElementById('tabNuevaOrden').classList.remove('hidden');
+                    cargarFormularioNuevaOrden();
+                }
+                
+                loginScreen.classList.add('hidden');
+                mainSystem.classList.remove('hidden');
+                
+                iniciarListenersFirebase();
+                
+                mostrarNotificacion(`Bienvenido ${usuarios[username].nombre}`, 'info', currentArea);
+            } else {
+                alert('Usuario o contraseña incorrectos');
+            }
+        });
+
+        // MODIFICAR EL LOGOUT PARA LIMPIAR LA PERSISTENCIA
+        logoutBtn.addEventListener('click', function() {
+            cerrarSesionPersistente();
+            currentUser = null;
+            currentRole = null;
+            currentArea = null;
+            mainSystem.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            loginForm.reset();
+            
+            db.ref('ordenes').off();
+            db.ref('notificaciones').off();
+            db.ref('.info/connected').off();
+        });
+
+        // FUNCIÓN PARA INICIAR LISTENERS DE FIREBASE (reutilizable)
+        function iniciarListenersFirebase() {
+            db.ref('ordenes').on('value', (snapshot) => {
+                ordenes = snapshot.val() || [];
+                actualizarDashboard();
+                actualizarTablaOrdenes();
+            });
+            
+            db.ref('notificaciones').on('value', (snapshot) => {
+                const notifsData = snapshot.val();
+                if (notifsData) {
+                    notificaciones = Object.entries(notifsData).map(([key, value]) => {
+                        return { ...value, key: key };
+                    });
+                    
+                    notificaciones.sort((a, b) => b.timestamp - a.timestamp);
+                    actualizarNotificaciones();
+                    
+                    if (notificaciones.length > 0) {
+                        const ultimaNotificacion = notificaciones[0];
+                        if (ultimaNotificacion.destinatario === currentUser && 
+                            ultimaNotificacion.timestamp > Date.now() - 10000) {
+                            mostrarNotificacion(ultimaNotificacion.mensaje, ultimaNotificacion.tipo, ultimaNotificacion.area);
+                        }
+                    }
+                } else {
+                    notificaciones = [];
+                    actualizarNotificaciones();
+                }
+            });
+            
+            db.ref('.info/connected').on('value', (snapshot) => {
+                const isConnected = snapshot.val();
+                connectionStatus.classList.toggle('offline', !isConnected);
+                connectionText.textContent = isConnected ? 'Conectado' : 'Desconectado';
+            });
+        }
+
+        // VERIFICAR SI HAY SESIÓN AL CARGAR LA PÁGINA
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!iniciarSesionAutomatica()) {
+                loginScreen.classList.remove('hidden');
+            }
+        });
+
+        // Event listeners para el modal de edición
+        closeModal.addEventListener('click', cerrarModalEdicion);
+        btnCancelarEdicion.addEventListener('click', cerrarModalEdicion);
+        btnGuardarEdicion.addEventListener('click', guardarCambiosEdicion);
+        btnEnviarComunicacion.addEventListener('click', enviarComunicacionJefe);
+
+        // Cerrar modal al hacer clic fuera del contenido
+        window.addEventListener('click', function(event) {
+            if (event.target === modalEditar) {
+                cerrarModalEdicion();
+            }
+        });
+
+        // Navegación por pestañas
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                document.querySelectorAll('.nav-tab').forEach(t => {
+                    t.classList.remove('active');
+                    if (currentArea === 'proceso') {
+                        t.classList.remove('proceso');
+                    }
+                });
+                
+                this.classList.add('active');
+                if (currentArea === 'proceso') {
+                    this.classList.add('proceso');
+                }
+                
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === tabId) {
+                        content.classList.add('active');
+                    }
+                });
+                
+                if (tabId === 'nueva-orden' && currentRole === 'jefe') {
+                    cargarFormularioNuevaOrden();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
